@@ -1,0 +1,34 @@
+CPLEX CONFIGURATION
+===================
+
+Maven needs to be configured to use CPLEX.
+
+Open a terminal in this directory and enter:
+
+mvn install:install-file -DgroupId=cplex -DartifactId=cplex -Dversion=12.9 -Dpackaging=jar -Dfile="C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\lib\cplex.jar"
+
+On a Mac, alter the -Dfile flag to specify /Applications/CPLEX_Studio129/cplex/lib/cplex.jar instead.
+
+This only needs to be done once.
+
+BUILDING THE EXECUTABLE JAR
+===========================
+
+Open a terminal in this directory and enter:
+
+mvn clean compile assembly:single
+
+The executable jar can be found at
+
+.\target\roasolver.jar
+
+RUNNING THE EXECUTABLE JAR
+==========================
+
+Open a terminal in the same directory as the jar and enter:
+
+java -jar roasolver.jar <flags/inputs>
+
+Running the jar on a Mac may require the following command:
+
+java -jar roasolver.jar -Djava.library.path=/Applications/CPLEX_Studio129/cplex/bin/x86-64_osx <flags/files>
