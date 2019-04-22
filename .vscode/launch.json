@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - RoaSolver",
+            "request": "launch",
+            "mainClass": "edu.princeton.cs.roasolver.RoaSolver",
+            "projectName": "roasolver",
+            "args": "${command:SpecifyProgramArgs}"
+        }
+    ]
+}
