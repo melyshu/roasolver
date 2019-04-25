@@ -43,6 +43,9 @@ public class RoaSolver {
     private final long endTime;
     private final long runTime;
 
+    // number of iterations of separation oracle
+    private int soCount;
+
     // encapsulates all internal exceptions
     public static class RoaSolverError extends Exception {
 
@@ -309,9 +312,12 @@ public class RoaSolver {
         // timing
         public final long runTime; // how long the trial ran for, in nanoseconds
 
+        // separation oracle count
+        public final int soCount; // how many times the separation oracle ran
+
         // simple constructor
         public RoaSolverOutput(int b, int m, int c, int[] n_b, int[] t_c, double[][] p_bc, double[][] v_cm, double J,
-                double[][][] pi_bcm, double[][] q_bc, long runTime) {
+                double[][][] pi_bcm, double[][] q_bc, long runTime, int soCount) {
 
             this.b = b;
             this.m = m;
@@ -327,6 +333,7 @@ public class RoaSolver {
             this.q_bc = q_bc;
 
             this.runTime = runTime;
+            this.soCount = soCount;
         }
 
         // a string representation of the problem and solution, suitable for printing to
@@ -592,7 +599,7 @@ public class RoaSolver {
                 index = 0;
 
             } catch (NoSuchElementException e) {
-                throw new RoaSolverError(String.format("Cannot find line %d!", lineNumber)); // validation_14.txt
+                throw new RoaSolverError(String.format("Cannot find line %d!", lineNumber)); // validation_01.txt
             }
         }
 
@@ -601,7 +608,7 @@ public class RoaSolver {
 
             if (index < lineTokens.length)
                 System.err.printf("Warning: line %d of input has %d unused tokens!\n", lineNumber,
-                        lineTokens.length - index); // validation_15.txt
+                        lineTokens.length - index); // validation_02.txt
 
             index = lineTokens.length;
         }
@@ -613,9 +620,9 @@ public class RoaSolver {
                 return Double.parseDouble(lineTokens[index++]);
             } catch (NumberFormatException e) {
                 throw new RoaSolverError(
-                        String.format("Error parsing %s (line %d, token %d) as a double", id, lineNumber, index)); // validation_16.txt
+                        String.format("Error parsing %s (line %d, token %d) as a double", id, lineNumber, index)); // validation_03.txt
             } catch (ArrayIndexOutOfBoundsException e) {
-                throw new RoaSolverError(String.format("Cannot find %s: line %d is too short!", id, lineNumber)); // validation_17.txt
+                throw new RoaSolverError(String.format("Cannot find %s: line %d is too short!", id, lineNumber)); // validation_04.txt
             }
         }
 
@@ -626,9 +633,9 @@ public class RoaSolver {
                 return Integer.parseInt(lineTokens[index++]);
             } catch (NumberFormatException e) {
                 throw new RoaSolverError(
-                        String.format("Error parsing %s (line %d, token %d) as an integer", id, lineNumber, index)); // validation_18.txt
+                        String.format("Error parsing %s (line %d, token %d) as an integer", id, lineNumber, index)); // validation_05.txt
             } catch (ArrayIndexOutOfBoundsException e) {
-                throw new RoaSolverError(String.format("Cannot find %s: line %d is too short!", id, lineNumber)); // validation_19.txt
+                throw new RoaSolverError(String.format("Cannot find %s: line %d is too short!", id, lineNumber)); // validation_06.txt
             }
         }
 
@@ -650,7 +657,7 @@ public class RoaSolver {
                     if (values.length < 1 || values.length > 2)
                         throw new RoaSolverError(
                                 String.format("Error parsing %s (line %d, token %d) as a valid integer range list", id,
-                                        lineNumber, index)); // validation_20.txt
+                                        lineNumber, index)); // validation_07.txt
 
                     int[] bounds = new int[2];
                     bounds[0] = Integer.parseInt(values[0]);
@@ -659,7 +666,7 @@ public class RoaSolver {
                     if (bounds[0] > bounds[1])
                         throw new RoaSolverError(
                                 String.format("Error parsing %s (line %d, token %d) as a valid integer range list", id,
-                                        lineNumber, index)); // validation_21.txt
+                                        lineNumber, index)); // validation_08.txt
 
                     for (int yi = bounds[0]; yi <= bounds[1]; yi++) {
 
@@ -678,9 +685,9 @@ public class RoaSolver {
 
             } catch (NumberFormatException e) {
                 throw new RoaSolverError(String.format(
-                        "Error parsing %s (line %d, token %d) as a valid integer range list", id, lineNumber, index)); // validation_22.txt
+                        "Error parsing %s (line %d, token %d) as a valid integer range list", id, lineNumber, index)); // validation_09.txt
             } catch (ArrayIndexOutOfBoundsException e) {
-                throw new RoaSolverError(String.format("Cannot find %s: line %d is too short!", id, lineNumber)); // validation_23.txt
+                throw new RoaSolverError(String.format("Cannot find %s: line %d is too short!", id, lineNumber)); // validation_10.txt
             }
         }
 
@@ -690,7 +697,7 @@ public class RoaSolver {
             try {
                 return lineTokens[index++];
             } catch (ArrayIndexOutOfBoundsException e) {
-                throw new RoaSolverError(String.format("Cannot find %s: line %d is too short!", id, lineNumber)); // validation_24.txt
+                throw new RoaSolverError(String.format("Cannot find %s: line %d is too short!", id, lineNumber)); // validation_11.txt
             }
         }
 
@@ -698,15 +705,15 @@ public class RoaSolver {
         private void validateFirstRow() throws RoaSolverError {
 
             if (b < 1)
-                throw new RoaSolverError("n must be at least 1"); // validation_00.txt
+                throw new RoaSolverError("n must be at least 1"); // validation_12.txt
             if (m < 1)
-                throw new RoaSolverError("m must be at least 1"); // validation_01.txt
+                throw new RoaSolverError("m must be at least 1"); // validation_13.txt
             if (t < 1)
-                throw new RoaSolverError("c must be at least 1"); // validation_02.txt
+                throw new RoaSolverError("c must be at least 1"); // validation_14.txt
             if (r < 0)
-                throw new RoaSolverError("r must be at least 0"); // validation_03.txt
+                throw new RoaSolverError("r must be at least 0"); // validation_15.txt
             if (s < 0)
-                throw new RoaSolverError("s must be at least 0"); // validation_04.txt
+                throw new RoaSolverError("s must be at least 0"); // validation_16.txt
         }
 
         // validates bounds on n_b, p_bt, d_mt, phi_rs, u_s
@@ -720,14 +727,14 @@ public class RoaSolver {
                 int z = n_bz[bi].length;
 
                 if (z < 1)
-                    throw new RoaSolverError(String.format("N_%d cannot be empty", bi + 1));
+                    throw new RoaSolverError(String.format("N_%d cannot be empty", bi + 1)); // validation_17.txt
 
                 int min = Integer.MAX_VALUE;
 
                 for (int zi = 0; zi < z; zi++) {
 
                     if (n_bz[bi][zi] < 0)
-                        throw new RoaSolverError(String.format("n_%d must have a lower bound of at least 0", bi + 1)); // validation_05.txt
+                        throw new RoaSolverError(String.format("n_%d must have a lower bound of at least 0", bi + 1)); // validation_18.txt
 
                     if (n_bz[bi][zi] < min)
                         min = n_bz[bi][zi];
@@ -737,7 +744,7 @@ public class RoaSolver {
             }
 
             if (n < 1)
-                throw new RoaSolverError("sum_i n_i must have a lower bound of at least 1"); // validation_06.txt
+                throw new RoaSolverError("sum_i n_i must have a lower bound of at least 1"); // validation_19.txt
 
             // validate contents of p_bt
             for (int bi = 0; bi < b; bi++) {
@@ -747,13 +754,13 @@ public class RoaSolver {
                 for (int ti = 0; ti < t; ti++) {
 
                     if (p_bt[bi][ti] < 0.0)
-                        throw new RoaSolverError(String.format("p_{%d,%d} must be nonnegative", bi + 1, ti + 1)); // validation_07.txt
+                        throw new RoaSolverError(String.format("p_{%d,%d} must be nonnegative", bi + 1, ti + 1)); // validation_20.txt
 
                     rowSum += p_bt[bi][ti];
                 }
 
                 if (rowSum <= 0.0)
-                    throw new RoaSolverError(String.format("sum_i p_{%d,i} must be positive", bi + 1)); // validation_08.txt
+                    throw new RoaSolverError(String.format("sum_i p_{%d,i} must be positive", bi + 1)); // validation_21.txt
             }
 
             // validate contents of d_mt
@@ -763,7 +770,7 @@ public class RoaSolver {
 
                     // safety check, should be impossible
                     if (d_mt[mi][ti].length() < 1)
-                        throw new RoaSolverError(String.format("d_{%d,%d} must be nonempty", mi + 1, ti + 1)); // validation_25.txt
+                        throw new RoaSolverError(String.format("d_{%d,%d} must be nonempty", mi + 1, ti + 1)); // validation_22.txt
 
                     // if valuation distribution is specified
                     if (d_mt[mi][ti].charAt(0) == 'D') {
@@ -774,13 +781,13 @@ public class RoaSolver {
 
                             if (li < 1 || r < li)
                                 throw new RoaSolverError(String
-                                        .format("d_{%d,%d} is not a valid valuation distribution", mi + 1, ti + 1)); // validation_09.txt
+                                        .format("d_{%d,%d} is not a valid valuation distribution", mi + 1, ti + 1)); // validation_23.txt
                         }
 
                         catch (NumberFormatException e) {
 
                             throw new RoaSolverError(
-                                    String.format("d_{%d,%d} is not a valuation distribution", mi + 1, ti + 1)); // validation_10.txt
+                                    String.format("d_{%d,%d} is not a valuation distribution", mi + 1, ti + 1)); // validation_24.txt
                         }
 
                         continue;
@@ -794,7 +801,7 @@ public class RoaSolver {
 
                     catch (NumberFormatException e) {
 
-                        throw new RoaSolverError(String.format("d_{%d,%d} is not a valid float", mi + 1, ti + 1)); // validation_11.txt
+                        throw new RoaSolverError(String.format("d_{%d,%d} is not a valid float", mi + 1, ti + 1)); // validation_25.txt
                     }
                 }
             }
@@ -807,13 +814,13 @@ public class RoaSolver {
                 for (int si = 0; si < s; si++) {
 
                     if (phi_rs[li][si] < 0.0)
-                        throw new RoaSolverError(String.format("phi_{%d,%d} must be nonnegative", li + 1, si + 1)); // validation_12.txt
+                        throw new RoaSolverError(String.format("phi_{%d,%d} must be nonnegative", li + 1, si + 1)); // validation_26.txt
 
                     rowSum += phi_rs[li][si];
                 }
 
                 if (rowSum <= 0.0)
-                    throw new RoaSolverError(String.format("sum_i phi_{%d,i} must be positive", li + 1)); // validation_13.txt
+                    throw new RoaSolverError(String.format("sum_i phi_{%d,i} must be positive", li + 1)); // validation_27.txt
             }
 
             // validate the contents of u_s
@@ -1000,6 +1007,7 @@ public class RoaSolver {
         // instantiate solutions
         pi_sol_bcm = new double[b][c][m];
         q_sol_bc = new double[b][c];
+        soCount = 0;
 
         // solve!
         solve();
@@ -1015,7 +1023,7 @@ public class RoaSolver {
         try {
 
             double J = cplex.getObjValue();
-            return new RoaSolverOutput(b, m, c, n_b, t_c, p_bc, v_cm, J, pi_sol_bcm, q_sol_bc, runTime);
+            return new RoaSolverOutput(b, m, c, n_b, t_c, p_bc, v_cm, J, pi_sol_bcm, q_sol_bc, runTime, soCount);
 
         } catch (IloException e) {
             throw new RoaSolverError("Cannot obtain objective value!");
@@ -1204,6 +1212,8 @@ public class RoaSolver {
 
         // executes the separation oracle, adding any broken constraint
         protected void main() throws IloException {
+
+            soCount++;
 
             // extract pi values at current node
             double[][][] pi_mbc = new double[m][b][c];
