@@ -32,3 +32,8 @@ java -jar roasolver.jar <flags/inputs>
 Running the jar on a Mac may require the following command:
 
 java -jar roasolver.jar -Djava.library.path=/Applications/CPLEX_Studio129/cplex/bin/x86-64_osx <flags/files>
+
+DOCUMENTATION
+=============
+
+Extended notes and documentation is available in docs\thesis.pdf

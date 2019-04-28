@@ -40,7 +40,7 @@ public class RoaSolverTiming {
         public String toString() {
 
             int variables = (m * b * c) + (b * c);
-            int constraints = (m * b * c) + (b * c) + (b * c * c);
+            int constraints = (2 * m * b * c) + (b * c) + (b * c * c);
 
             return b + "," + m + "," + c + "," + T + "," + variables + "," + constraints + "," + (soCount / (double) T) + ","
                     + (runTime / 1e9d / T);
@@ -123,6 +123,7 @@ public class RoaSolverTiming {
 
         out.println(TimingData.headerString);
         System.out.println(TimingData.headerString);
+        out.flush();
 
         // iterate through possible parameters
         for (int b : bs) {
@@ -134,26 +135,36 @@ public class RoaSolverTiming {
                     // run each trial
                     for (int t = 0; t < T; t++) {
 
-                        // assume one bidder per bidder class
+                        // random number of bidders per bidder class
                         int[] n_b = new int[b];
                         for (int bi = 0; bi < b; bi++) {
 
-                            n_b[bi] = 1;
+                            n_b[bi] = (int) (Math.random() * b) + 1;
                         }
 
                         // assume same type class per type
                         int[] t_c = new int[c];
                         for (int ci = 0; ci < c; ci++) {
 
-                            t_c[ci] = 1;
+                            t_c[ci] = 0;
                         }
 
                         // generate random values for p_bc
                         double[][] p_bc = new double[b][c];
                         for (int bi = 0; bi < b; bi++) {
+
+                            double rowSum = 0.0;
+
                             for (int ci = 0; ci < c; ci++) {
 
                                 p_bc[bi][ci] = Math.random();
+                                rowSum += p_bc[bi][ci];
+                            }
+
+                            // normalize
+                            for (int ci = 0; ci < c; ci++) {
+
+                                p_bc[bi][ci] /= rowSum;
                             }
                         }
 
